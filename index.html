@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Saiba quanto você pode economizar na conta de luz com energia solar</title>
+  <meta name="description" content="Formulário de simulação e contato para energia solar, com envio para webhook e fluxo condicional de pagamento." />
+  <style>
+    :root {
+      --blue: #2563eb; /* azul */
+      --yellow: #facc15; /* amarelo */
+      --bg1: #1e3a8a;
+      --bg2: #f59e0b;
+      --text: #0f172a;
+      --muted: #475569;
+      --white: #ffffff;
+      --card: rgba(255,255,255,0.95);
+      --shadow: 0 10px 25px rgba(0,0,0,0.12);
+      --radius: 16px;
+    }
+
+    /* Background gradient (azul → amarelo) */
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      background: linear-gradient(135deg, var(--blue) 0%, var(--yellow) 100%);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 560px;
+    }
+
+    .hero {
+      color: var(--white);
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px 0;
+      font-size: clamp(1.4rem, 3.8vw, 2.1rem);
+      line-height: 1.15;
+      font-weight: 800;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.25);
+    }
+
+    .card {
+      background: var(--card);
+      backdrop-filter: blur(3px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: clamp(16px, 3vw, 28px);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .grid.single {
+      grid-template-columns: 1fr;
+    }
+
+    label {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text);
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    input, select, button {
+      width: 100%;
+      font-size: 1rem;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      padding: 12px 14px;
+      box-sizing: border-box;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+      transition: box-shadow 160ms ease, border-color 160ms ease, transform 80ms ease;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 46px;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+    }
+
+    .radio-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      cursor: pointer;
+      user-select: none;
+      width: 100%;
+      transition: background 160ms ease, border-color 160ms ease, transform 80ms ease;
+    }
+
+    .chip input {
+      width: 18px;
+      height: 18px;
+    }
+
+    .chip.active {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      padding: 13px 16px;
+      cursor: pointer;
+      box-shadow: 0 10px 18px rgba(37, 99, 235, 0.25);
+    }
+
+    .btn.block { width: 100%; }
+
+    .btn:hover { filter: brightness(0.96); }
+    .btn:active { transform: translateY(1px); }
+
+    .btn.secondary {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid #e2e8f0;
+      box-shadow: none;
+    }
+
+    .row-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 6px;
+      width: 100%;
+    }
+
+    .hidden { display: none !important; }
+
+    .step-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      margin: 0 0 10px 0;
+      color: var(--text);
+    }
+
+    .hint { color: var(--muted); font-size: 0.85rem; }
+
+    .footer-note {
+      margin-top: 16px;
+      font-size: 0.86rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    /* Mobile-first tweaks */
+    @media (max-width: 640px) {
+      .grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 1.35rem; }
+      .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="hero" role="banner">
+      <h1>Saiba quanto você pode economizar na conta de luz com energia solar</h1>
+      <p class="hint">Preencha seus dados e receba uma estimativa personalizada.</p>
+    </header>
+
+    <main class="card" role="main">
+      <form id="solarForm" novalidate>
+        <!-- STEP 1: Dados básicos -->
+        <section id="step-1" aria-labelledby="step1-title">
+          <p id="step1-title" class="step-title">Dados de contato</p>
+          <div class="grid">
+            <div>
+              <label for="nome">Nome completo *</label>
+              <input id="nome" name="nome" type="text" autocomplete="name" required placeholder="Ex: Maria Silva" />
+            </div>
+            <div>
+              <label for="telefone">Telefone (WhatsApp) *</label>
+              <input id="telefone" name="telefone" type="tel" inputmode="tel" autocomplete="tel" required placeholder="(DDD) 99999-9999" />
+            </div>
+            <div>
+              <label for="email">E-mail *</label>
+              <input id="email" name="email" type="email" autocomplete="email" required placeholder="voce@exemplo.com" />
+            </div>
+            <div>
+              <label for="consumo">Consumo mensal de energia *</label>
+              <input id="consumo" name="consumo" type="number" inputmode="decimal" required min="0" step="0.01" placeholder="Ex: 450 (kWh) ou 350 (R$)" />
+            </div>
+          </div>
+
+          <div class="row-actions">
+            <button type="button" class="btn block" id="to-step-2">Continuar</button>
+          </div>
+        </section>
+
+        <!-- STEP 2: Segmento -->
+        <section id="step-2-segmento" class="hidden" aria-labelledby="step2seg-title">
+          <p id="step2seg-title" class="step-title">Para qual tipo de sistema?</p>
+          <div class="radio-row" role="radiogroup" aria-label="Segmento">
+            <label class="chip" data-chip>
+              <input type="radio" name="segmento" value="residencia" required /> Residência
+            </label>
+            <label class="chip" data-chip>
+              <input type="radio" name="segmento" value="empresa" /> Empresa
+            </label>
+            <label class="chip" data-chip>
+              <input type="radio" name="segmento" value="sistema_rural" /> Sistema rural
+            </label>
+          </div>
+          <div class="row-actions">
+            <button type="button" class="btn secondary block" data-back="1">Voltar</button>
+            <button type="button" class="btn block" id="to-step-3">Continuar</button>
+          </div>
+        </section>
+
+        <!-- STEP 3: Pagamento -->
+        <section id="step-3-pagamento" class="hidden" aria-labelledby="step3-title">
+          <p id="step3-title" class="step-title">Como você pretende pagar?</p>
+          <div class="radio-row" role="radiogroup" aria-label="Método de pagamento">
+            <label class="chip" data-chip>
+              <input type="radio" name="pagamento" value="avista" required /> À vista
+            </label>
+            <label class="chip" data-chip>
+              <input type="radio" name="pagamento" value="cartao" /> Cartão
+            </label>
+            <label class="chip" data-chip>
+              <input type="radio" name="pagamento" value="financiamento" /> Financiamento
+            </label>
+          </div>
+          <div class="row-actions">
+            <button type="button" class="btn secondary block" data-back="1">Voltar</button>
+            <button type="button" class="btn block" id="to-next-or-submit">Avançar</button>
+          </div>
+        </section>
+
+        <!-- STEP 3 (condicional): Dados para financiamento -->
+        <section id="step-financiamento" class="hidden" aria-labelledby="step3-title">
+          <p id="step3-title" class="step-title">Dados para análise de financiamento</p>
+          <div class="grid">
+            <div>
+              <label for="nascimento">Data de nascimento *</label>
+              <input id="nascimento" name="nascimento" type="date" required />
+            </div>
+            <div>
+              <label for="cpf">CPF *</label>
+<input id="cpf" name="cpf" type="text" inputmode="numeric" required placeholder="Ex: 123.456.789-09 ou 12345678909" />
+<p class="hint" style="margin-top:4px">Pode digitar com pontos e traço; vamos limpar automaticamente antes de enviar.</p>
+            </div>
+            <div>
+              <label for="renda">Renda mensal (R$) *</label>
+              <input id="renda" name="renda" type="number" inputmode="decimal" min="0" step="0.01" required placeholder="Ex: 3500" />
+            </div>
+          </div>
+          <p class="hint">Seus dados são usados estritamente para simulação e contato sobre o financiamento.</p>
+          <div class="row-actions">
+            <button type="button" class="btn secondary block" data-back="2">Voltar</button>
+            <button type="button" class="btn block" id="submit-financiamento">Finalizar</button>
+          </div>
+        </section>
+
+        <!-- STEP 4: Obrigado -->
+        <section id="step-obrigado" class="hidden" aria-live="polite">
+          <h2 style="margin-top:0">Obrigado! ✅</h2>
+          <p>Recebemos seus dados. Em instantes, um consultor entrará em contato para apresentar a melhor solução de energia solar para você.</p>
+          <p class="hint" id="post-status">Enviando suas informações com segurança...</p>
+          <div class="row-actions">
+            <button type="button" class="btn block" id="novo-envio">Enviar outro contato</button>
+          </div>
+          <p class="footer-note">Dúvidas? Responda a esta página ou aguarde nosso contato no WhatsApp informado.</p>
+        </section>
+      </form>
+    </main>
+  </div>
+
+  <script>
+    // ====== UTIL ======
+    const $ = (q, el=document) => el.querySelector(q);
+    const $$ = (q, el=document) => Array.from(el.querySelectorAll(q));
+
+    // Toggle active style on "chip" radios
+    function syncChips(scope=document){
+      $$('label.chip', scope).forEach(lbl => {
+        const input = $('input', lbl);
+        const name = input?.name;
+        if(!name) return;
+        input.addEventListener('change', () => {
+          $$(`input[name="${name}"]`).forEach(r => r.closest('label.chip')?.classList.remove('active'));
+          input.closest('label.chip')?.classList.add('active');
+        });
+      });
+    }
+    syncChips(document);
+
+    // Age gate: 18+
+    (function enforceAdult(){
+      const dob = $('#nascimento');
+      if(!dob) return;
+      const now = new Date();
+      const max = new Date(now.getFullYear() - 18, now.getMonth(), now.getDate());
+      dob.max = max.toISOString().split('T')[0];
+    })();
+
+    // Form state
+    const state = {
+      nome: '', telefone: '', email: '', consumo: '', segmento: '',
+      pagamento: '', nascimento: '', cpf: '', renda: ''
+    };
+
+    const form = $('#solarForm');
+    const steps = {
+      s1: $('#step-1'),
+      seg: $('#step-2-segmento'),
+      pay: $('#step-3-pagamento'),
+      fin: $('#step-financiamento'),
+      ok: $('#step-obrigado')
+    };
+
+    function show(section){
+      Object.values(steps).forEach(sec => sec.classList.add('hidden'));
+      section.classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function readStep1(){
+      state.nome = $('#nome').value.trim();
+      state.telefone = $('#telefone').value.trim();
+      state.email = $('#email').value.trim();
+      state.consumo = $('#consumo').value.trim();
+      const seg = $('input[name="segmento"]:checked');
+      state.segmento = seg ? seg.value : '';
+    }
+
+    function readPayment(){
+      const p = $('input[name="pagamento"]:checked');
+      state.pagamento = p ? p.value : '';
+    }
+
+    function readFinanciamento(){
+      state.nascimento = $('#nascimento').value;
+      state.cpf = $('#cpf').value.replace(/\D/g, '');
+      state.renda = $('#renda').value;
+    }
+
+    function validateScope(scope){
+      // Use built-in validation; highlight the first invalid field
+      const invalid = $$('input:invalid, select:invalid', scope);
+      if(invalid.length){
+        const el = invalid[0];
+        el.focus();
+        el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        return false;
+      }
+      return true;
+    }
+
+    // Navigation
+    $('#to-step-2').addEventListener('click', () => {
+      readStep1();
+      if(!validateScope(steps.s1)) return;
+      show(steps.seg);
+    });
+
+    // Ir do segmento para pagamento
+    $('#to-step-3').addEventListener('click', () => {
+      if(!validateScope(steps.seg)) return;
+      show(steps.pay);
+    });
+
+    // Navegação de voltar baseada na seção atual
+    document.querySelectorAll('[data-back]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sectionId = btn.closest('section')?.id;
+        if(sectionId === 'step-2-segmento') return show(steps.s1);
+        if(sectionId === 'step-3-pagamento') return show(steps.seg);
+        if(sectionId === 'step-financiamento') return show(steps.pay);
+        return show(steps.s1);
+      });
+    });
+    
+
+    $('#to-next-or-submit').addEventListener('click', () => {
+      readPayment();
+      if(!validateScope(steps.pay)) return;
+      if(state.pagamento === 'financiamento'){
+        show(steps.fin);
+      } else {
+        // Avança direto para obrigado e dispara webhook
+        goToObrigadoAndSend();
+      }
+    });
+
+    $('#submit-financiamento').addEventListener('click', () => {
+      readFinanciamento();
+      if(!validateScope(steps.fin)) return;
+      goToObrigadoAndSend();
+    });
+
+    $('#novo-envio').addEventListener('click', () => {
+      form.reset();
+      $$('label.chip.active').forEach(l => l.classList.remove('active'));
+      Object.keys(state).forEach(k => state[k] = '');
+      $('#post-status').textContent = '—';
+      show(steps.s1);
+    });
+
+    // Webhook sender with robust fallbacks (fetch → sendBeacon → hidden form → image pixel GET)
+    // ===== META CAPI (disparo na página de obrigado) =====
+    const META_CAPI_ENDPOINT = 'https://graph.facebook.com/v24.0/2727680507430142/events?access_token=EAALzfEWcsuIBPZCJJM2a4BHZA9Th7KGteYTPwnU1j6fMKbsPfnsz6WeZCmLhZCZB5Tz3mYqMNQZAYz9WLBgXBYIhTISaAdicZBFSGymzw0285DM6YBgEjcQJtlNts38YCZAbkNd6UZAZCEgajTGcJOUtBDZASOBJRQddjh0gunKl5MwdJYf0ZBAiFoukPgvAnK95dNhoxQZDZD';
+    const META_LEAD_EVENT_NAME = 'Lead'; // estágio no CRM
+    const META_LEAD_EVENT_SOURCE = 'Nexma CRM';
+    const META_ACTION_SOURCE = 'system_generated';
+    const META_EVENT_SOURCE = 'crm';
+    const META_TEST_EVENT_CODE = (new URL(location.href)).searchParams.get('test_event_code') || ''; // opcional: preencha para testar no Events Manager
+
+    function getCookie(name){
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+      return null;
+    }
+
+    function getQueryParam(param){
+      const url = new URL(location.href);
+      return url.searchParams.get(param);
+    }
+
+    function buildFbc(){
+      const fbclid = getQueryParam('fbclid');
+      if(fbclid){
+        return `fb.1.${Math.floor(Date.now()/1000)}.${fbclid}`;
+      }
+      const fromCookie = getCookie('_fbc');
+      return fromCookie || undefined;
+    }
+
+    function buildFbp(){
+      return getCookie('_fbp') || undefined;
+    }
+
+    function normalizeEmail(email){
+      return (email || '').trim().toLowerCase();
+    }
+
+    function normalizePhoneBR(phone){
+      let digits = (phone || '').replace(/\D/g, '');
+      if (!digits) return '';
+      if (!digits.startsWith('55')) {
+        digits = '55' + digits; // padroniza para BR
+      }
+      return digits;
+    }
+
+    async function sha256Hex(str){
+      const enc = new TextEncoder();
+      const buf = await crypto.subtle.digest('SHA-256', enc.encode(str));
+      const arr = Array.from(new Uint8Array(buf));
+      return arr.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function buildMetaCapiPayload(){
+      const emNorm = normalizeEmail(state.email);
+      const phNorm = normalizePhoneBR(state.telefone);
+      const emHash = emNorm ? await sha256Hex(emNorm) : undefined;
+      const phHash = phNorm ? await sha256Hex(phNorm) : undefined;
+      const leadId = getQueryParam('lead_id'); // se vier do Lead Ads
+
+      const event = {
+        action_source: META_ACTION_SOURCE,
+        custom_data: {
+          event_source: META_EVENT_SOURCE,
+          lead_event_source: META_LEAD_EVENT_SOURCE
+        },
+        event_name: META_LEAD_EVENT_NAME,
+        event_time: Math.floor(Date.now()/1000),
+        user_data: {
+          em: emHash ? [emHash] : undefined,
+          ph: phHash ? [phHash] : undefined,
+          fbc: buildFbc(),
+          fbp: buildFbp(),
+          client_user_agent: navigator.userAgent,
+          lead_id: leadId ? leadId : undefined
+        }
+      };
+
+      // remove chaves undefined para evitar rejeições
+      const clean = JSON.parse(JSON.stringify({ data: [event] }));
+      if (META_TEST_EVENT_CODE) clean.test_event_code = META_TEST_EVENT_CODE;
+      return clean;
+    }
+
+    async function fireMetaCapiEvent(){
+      try {
+        const body = await buildMetaCapiPayload();
+        const res = await fetch(META_CAPI_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          keepalive: true,
+          mode: 'cors',
+          cache: 'no-store',
+          credentials: 'omit'
+        });
+        console.log('[Meta CAPI] status', res.status);
+      } catch (e) {
+        console.warn('[Meta CAPI] falha ao enviar:', e);
+      }
+    }
+
+    let sentOnce = false;
+    async function goToObrigadoAndSend(){
+      // Re-leia os valores (garantia)
+      readStep1();
+      readPayment();
+      if(state.pagamento === 'financiamento') readFinanciamento();
+
+      show(steps.ok);
+
+      // Disparo da Meta CAPI (evento servidor/CRM)
+      fireMetaCapiEvent().catch(e => console.warn('Meta CAPI erro:', e));
+
+      if(sentOnce) return; // evita duplicidade em recarregamentos
+      sentOnce = true;
+
+      const url = 'https://primary-production-4e12.up.railway.app/webhook/df1ce19a-e032-4dd7-aa9f-081d3820a33f';
+      const payload = {
+        nome: state.nome,
+        telefone: state.telefone,
+        email: state.email,
+        consumo: state.consumo,
+        segmento: state.segmento,
+        pagamento: state.pagamento,
+        nascimento: state.nascimento || null,
+        cpf: state.cpf || null,
+        renda_mensal: state.renda || null,
+        origem: 'form-energia-solar',
+        user_agent: navigator.userAgent,
+        page_url: location.href,
+        ts: new Date().toISOString()
+      };
+
+      // Status UI
+      const statusEl = $('#post-status');
+      statusEl.textContent = 'Enviando suas informações com segurança...';
+
+      // 1) try fetch (CORS)
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          keepalive: true,
+          mode: 'cors',
+          cache: 'no-store',
+          credentials: 'omit'
+        });
+        if(res.ok){
+          statusEl.textContent = 'Informações enviadas. Em breve falaremos com você!';
+          return;
+        } else {
+          throw new Error('HTTP ' + res.status);
+        }
+      } catch (err) {
+        console.warn('Fetch falhou ou bloqueado por CORS:', err);
+      }
+
+      // 2) try navigator.sendBeacon (content-type text/plain, sem CORS)
+      try {
+        const blob = new Blob([JSON.stringify(payload)], { type: 'text/plain' });
+        const ok = navigator.sendBeacon && navigator.sendBeacon(url, blob);
+        if(ok){
+          statusEl.textContent = 'Informações enviadas (beacon).';
+          return;
+        }
+      } catch (err) {
+        console.warn('sendBeacon falhou:', err);
+      }
+
+      // 3) hidden form POST via iframe (evita navegação)
+      try {
+        const iframe = document.createElement('iframe');
+        iframe.name = 'hidden_iframe';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = url;
+        form.target = 'hidden_iframe';
+        // append flat fields
+        Object.entries(payload).forEach(([k,v]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = k;
+          input.value = typeof v === 'string' ? v : JSON.stringify(v);
+          form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
+        statusEl.textContent = 'Informações enviadas (fallback).';
+        return;
+      } catch (err) {
+        console.warn('Form POST fallback falhou:', err);
+      }
+
+      // 4) Último recurso: pixel GET com querystring (pode ser limitado a 2KB)
+      try {
+        const qs = new URLSearchParams();
+        Object.entries(payload).forEach(([k,v]) => qs.append(k, typeof v === 'string' ? v : JSON.stringify(v)));
+        const img = new Image();
+        img.src = url + '?' + qs.toString();
+        statusEl.textContent = 'Tentamos enviar seus dados. Se alguém não entrar em contato, chame a gente por favor.';
+      } catch (err) {
+        statusEl.textContent = 'Não foi possível confirmar o envio. Entre em contato por WhatsApp.';
+      }
+    }
+
+    // Evita submit padrão
+    form.addEventListener('submit', e => e.preventDefault());
+  </script>
+</body>
+</html>
