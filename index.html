@@ -5,6 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saiba quanto você pode economizar na conta de luz com energia solar</title>
   <meta name="description" content="Formulário de simulação e contato para energia solar, com envio para webhook e fluxo condicional de pagamento." />
+
+  <!-- Meta Pixel Code -->
+  <script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '840945995134652');
+  fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=840945995134652&ev=PageView&noscript=1"
+  /></noscript>
+  <!-- End Meta Pixel Code -->
+
   <style>
     :root {
       --blue: #2563eb; /* azul */
@@ -706,12 +725,30 @@
     $('#to-step-2').addEventListener('click', () => {
       readStep1();
       if(!validateScope(steps.s1)) return;
+
+      // Meta Pixel: Usuário iniciou o processo de cadastro
+      if(typeof fbq !== 'undefined'){
+        fbq('track', 'InitiateCheckout', {
+          content_name: 'Formulário Energia Solar - Dados de Contato',
+          content_category: 'Lead Generation'
+        });
+      }
+
       show(steps.seg);
     });
 
     // Ir do segmento para pagamento
     $('#to-step-3').addEventListener('click', () => {
       if(!validateScope(steps.seg)) return;
+
+      // Meta Pixel: Usuário selecionou o segmento
+      if(typeof fbq !== 'undefined'){
+        fbq('track', 'AddToCart', {
+          content_name: 'Formulário Energia Solar - Segmento',
+          content_category: state.segmento || 'Lead Generation'
+        });
+      }
+
       show(steps.pay);
     });
 
@@ -730,6 +767,15 @@
     $('#to-next-or-submit').addEventListener('click', () => {
       readPayment();
       if(!validateScope(steps.pay)) return;
+
+      // Meta Pixel: Usuário selecionou método de pagamento
+      if(typeof fbq !== 'undefined'){
+        fbq('track', 'AddPaymentInfo', {
+          content_name: 'Formulário Energia Solar - Pagamento',
+          payment_type: state.pagamento || 'unknown'
+        });
+      }
+
       if(state.pagamento === 'financiamento'){
         show(steps.fin);
       } else {
@@ -863,6 +909,18 @@
       if(state.pagamento === 'financiamento') readFinanciamento();
 
       show(steps.ok);
+
+      // Meta Pixel: Lead completou o formulário
+      if(typeof fbq !== 'undefined'){
+        fbq('track', 'Lead', {
+          content_name: 'Formulário Energia Solar - Completo',
+          content_category: 'Lead Generation',
+          value: parseFloat(state.consumo) || 0,
+          currency: 'BRL',
+          segmento: state.segmento,
+          pagamento: state.pagamento
+        });
+      }
 
       // Disparo da Meta CAPI (evento servidor/CRM)
       fireMetaCapiEvent().catch(e => console.warn('Meta CAPI erro:', e));
